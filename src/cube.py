@@ -18,16 +18,24 @@ SOLVED_COLORS = {
 
 
 class Cubie:
-    def __init__(self, position, colors):
+    def __init__(self, position, localColors):
         self.position = position          # (x, y, z) coordinates of the cubie in the cube
         # dictionary mapping face names to colors
         # colors are LOCAL and NEVER change, they are fixed for each cubie
         # the orientation matrix is what tells you where local faces are in world space
-        self.colors = colors
+        self.localColors = localColors
         self.orientation = np.identity(3) # 3x3 identity matrix representing the cubie's orientation in space
 
+    def getWorldFaceColor(self):
+        worldColors = {}
+        for localFace, color in self.localColors.items():
+            # Transform the local face direction to world space using the orientation matrix
+            worldFace = tuple(np.round(self.orientation @ np.array(localFace)).astype(int))
+            worldColors[worldFace] = color
+        return worldColors
+
     def __repr__(self):
-        return f"Cubie(position={self.position}, colors={self.colors})"
+        return f"Cubie(position={self.position}, worldColors={self.getWorldFaceColor()})"
 
 def createSolvedCube():
     cubies = []
@@ -58,6 +66,8 @@ def createSolvedCube():
 """
 Rotate a cubie around a given axis (x, y, or z) by 90 degrees
 'direction' = +1 for clockwise, -1 for counter-clockwise
+IMPORTANT: direction is "opposite" of R and R' moves bc clockwise rotation is actually
+           opposite the positive direction based on the right hand rule. 
 """
 
 def rotateCubie(cubie, axis, direction):
@@ -85,17 +95,17 @@ def rotateCubie(cubie, axis, direction):
     cubie.position = tuple(np.round(rotationMatrix @ np.array(cubie.position)).astype(int))
 
 
-# axis, axisIndex, layerIndex, direction
-# axisDirection: x = 0, y = 1, z = 2
+# axis, axisIndex (in accordance to cubie.position), layerIndex, direction (^^ see rotateCubie note above)
+# axisIndex: x = 0, y = 1, z = 2
 # layerIndex: corresponding to layer being rotated 
 
 MOVES = {
     "R": ("x", 0, 1, -1), "R'": ("x", 0, 1, 1),
     "L": ("x", 0, -1, 1), "L'": ("x", 0, -1, -1),
-    "U": ("y", 1, 0, -1), "U'": ("y", 1, 0, 1),
-    "D": ("y", -1, 0, 1), "D'": ("y", -1, 0, -1),
-    "F": ("z", 0, 1, -1), "F'": ("z", 0, 1, 1),
-    "B": ("z", 0, -1, 1), "B'": ("z", 0, -1, -1)
+    "U": ("y", 1, 1, -1), "U'": ("y", 1, 1, 1),
+    "D": ("y", 1, -1, 1), "D'": ("y", 1, -1, -1),
+    "F": ("z", 2, 1, -1), "F'": ("z", 2, 1, 1),
+    "B": ("z", 2, -1, 1), "B'": ("z", 2, -1, -1)
 }
 
 def applyMove(cubies, moveName):
@@ -118,11 +128,13 @@ def applyMove(cubies, moveName):
 
 def isSolved(cubies):
     solved = createSolvedCube()
-    solvedPositions = {cubie.position: cubie.colors for cubie in solved}
+    solvedPositions = {cubie.position: cubie.localColors for cubie in solved}
     for cubie in cubies:
         if cubie.position not in solvedPositions:
             return False
-        if cubie.colors != solvedPositions[cubie.position]:
+        # comparing against localColors of solved cube because they the same as world colors
+        # less computation
+        if cubie.getWorldFaceColor() != solvedPositions[cubie.position]:
             return False
     return True
 
