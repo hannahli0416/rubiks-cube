@@ -63,14 +63,14 @@ def createSolvedCube():
 
 
 
-"""
-Rotate a cubie around a given axis (x, y, or z) by 90 degrees
-'direction' = +1 for clockwise, -1 for counter-clockwise
-IMPORTANT: direction is "opposite" of R and R' moves bc clockwise rotation is actually
-           opposite the positive direction based on the right hand rule. 
-"""
 
 def rotateCubie(cubie, axis, direction):
+    """
+    Rotate a cubie around a given axis (x, y, or z) by 90 degrees
+    'direction' = +1 for clockwise, -1 for counter-clockwise
+    IMPORTANT: direction is "opposite" of R and R' moves bc clockwise rotation is actually
+            opposite the positive direction based on the right hand rule. 
+    """
     angle = np.pi / 2 * direction  # 90 degrees in radians
     c, s = round(np.cos(angle)), round(np.sin(angle))
     if axis == 'x':
@@ -95,10 +95,10 @@ def rotateCubie(cubie, axis, direction):
     cubie.position = tuple(np.round(rotationMatrix @ np.array(cubie.position)).astype(int))
 
 
+
 # axis, axisIndex (in accordance to cubie.position), layerIndex, direction (^^ see rotateCubie note above)
 # axisIndex: x = 0, y = 1, z = 2
 # layerIndex: corresponding to layer being rotated 
-
 MOVES = {
     "R": ("x", 0, 1, -1), "R'": ("x", 0, 1, 1),
     "L": ("x", 0, -1, 1), "L'": ("x", 0, -1, -1),
